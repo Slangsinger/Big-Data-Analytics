@@ -1,2 +1,1 @@
-# Technological-fundamentals-in-the-Big-Data-World
-Git for the lab
+Git for the master course project
