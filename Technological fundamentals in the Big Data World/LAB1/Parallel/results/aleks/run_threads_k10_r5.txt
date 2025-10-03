@@ -1,0 +1,1 @@
+[parallel|threads|aleks] k_opt=3 inertia=542125696.68 cluster=2 longest=263 avg=125.98 protid=219 workers=4 elapsed=515.46s
