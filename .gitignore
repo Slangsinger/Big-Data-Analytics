@@ -210,3 +210,6 @@ Technological fundamentals in the Big Data World/LAB1/venv/
 **/__pycache__/
 *.pyc
 .ipynb_checkpoints/
+venv/
+__pycache__/
+*.pyc
