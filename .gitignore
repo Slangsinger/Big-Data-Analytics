@@ -205,3 +205,8 @@ cython_debug/
 marimo/_static/
 marimo/_lsp/
 __marimo__/
+Technological fundamentals in the Big Data World/LAB1/proteins.csv
+Technological fundamentals in the Big Data World/LAB1/venv/
+**/__pycache__/
+*.pyc
+.ipynb_checkpoints/
