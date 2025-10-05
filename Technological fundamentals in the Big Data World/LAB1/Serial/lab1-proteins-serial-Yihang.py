@@ -7,10 +7,31 @@ import matplotlib.pyplot as plt
 # ---------- K-means from scratch ----------
 def kmeans(raw_data, k_num, max_iters=300, tol=1e-4, num_gen=None):
     """
-    X: (n, d) data
-    k: clusters
-    returns labels (n,), centroids (k, d), inertia (sum of squared distances)
+    Run K-means algorithm.
+
+    Parameters
+    ----------
+    raw_data : np.ndarray, shape (n, d)
+        Input features (rows are samples, columns are features).
+    k_num : int
+        Number of clusters.
+    max_iters : int
+        Max Lloyd iterations.
+    tol : float
+        Absolute convergence tolerance on centroid shift (Euclidean norm).
+    num_gen : np.random.Generator or None
+        RNG for reproducible initialization and empty-cluster reseeding.
+
+    Returns
+    -------
+    labels : np.ndarray, shape (n,)
+        Cluster assignment for each sample.
+    centroids : np.ndarray, shape (k_num, d)
+        Final centroid locations.
+    inertia : float
+        Within-cluster sum of squares (WSS).
     """
+
     n, d = raw_data.shape
     if num_gen is None:
         num_gen = np.random.default_rng()
@@ -49,6 +70,13 @@ def kmeans(raw_data, k_num, max_iters=300, tol=1e-4, num_gen=None):
 
 # Elbow: choose k by "max distance to the line" heuristic
 def choose_k_by_elbow(k_list, inertia_list):
+    """
+    Select k via the "max distance to line" elbow heuristic.
+
+    Treats the WSS-vs-k curve as a polyline and returns the k whose point
+    is farthest from the line connecting the first and last points.
+    """
+
     x1, y1 = k_list[0], inertia_list[0]
     x2, y2 = k_list[-1], inertia_list[-1]
 
@@ -70,7 +98,7 @@ def choose_k_by_elbow(k_list, inertia_list):
 
 if __name__ == "__main__":
 
-    # Start timing and reading data
+    # I/O and feature preparation
     global_start = time.time()
     csv_path = Path("proteins.csv")
     df = pd.read_csv(csv_path)
@@ -78,7 +106,7 @@ if __name__ == "__main__":
     features = df[["enzyme", "hydrofob"]].astype(float).to_numpy()
     lengths  = df["sequence"].str.len().to_numpy()
 
-    # Elbow method
+    # Elbow method over k(the number of clusters) = 1..15
     elbow_start = time.time()
     rng = np.random.default_rng(42)
     ks = list(range(1, 16))
@@ -105,6 +133,8 @@ if __name__ == "__main__":
     global_end = time.time()
 
     # ---------- Plots ----------
+
+    # Elbow plot
     plt.figure(figsize=(5,4))
     plt.plot(ks, inertia, marker='o')
     plt.title("Elbow Plot (WSS vs k)")
@@ -136,7 +166,7 @@ if __name__ == "__main__":
     plt.xticks(range(k_opt), [f"C{i}" for i in range(k_opt)])
     plt.title("Centroid Heat Map")
 
-    # annotate
+    # Annotate the heatmap cells
     for r in range(mat.shape[0]):
         for c in range(mat.shape[1]):
             plt.text(c, r, f"{mat[r,c]:.2f}", ha="center", va="center")
