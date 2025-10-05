@@ -80,6 +80,8 @@ def elbow_worker(task_q,out_q,raw_data):
         task_q.task_done()
 
 if __name__ == "__main__":
+
+    # Start timing and reading data
     global_start = time.time()
     csv_path = Path("proteins.csv")
     df = pd.read_csv(csv_path)
@@ -87,7 +89,7 @@ if __name__ == "__main__":
     features = df[["enzyme", "hydrofob"]].astype(float).to_numpy()
     lengths  = df["sequence"].str.len().to_numpy()
 
-    # Parallel elbow
+    # Parallel elbow method
     elbow_start = time.time()
     rng = np.random.default_rng(42)
     ks = list(range(1, 16))
@@ -181,7 +183,7 @@ if __name__ == "__main__":
     print(f"Optimal k (elbow): {k_opt}")
     print(f"Cluster with highest average sequence length: {best_cluster}")
     print(f"  Avg sequence length: {best_avg_len:.4f} (n={best_count})")
-    print(f"Elbow time (parallel): {elbow_end - elbow_start:.3f} s")
+    print(f"Elbow time (TH): {elbow_end - elbow_start:.3f} s")
     print(f"Total execution time: {global_end - global_start:.3f} s")
 
     # Show all figures at the very end

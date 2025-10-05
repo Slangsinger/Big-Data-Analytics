@@ -69,6 +69,8 @@ def choose_k_by_elbow(k_list, inertia_list):
 
 
 if __name__ == "__main__":
+
+    # Start timing and reading data
     global_start = time.time()
     csv_path = Path("proteins.csv")
     df = pd.read_csv(csv_path)
@@ -76,7 +78,7 @@ if __name__ == "__main__":
     features = df[["enzyme", "hydrofob"]].astype(float).to_numpy()
     lengths  = df["sequence"].str.len().to_numpy()
 
-    # 1) Elbow
+    # Elbow method
     elbow_start = time.time()
     rng = np.random.default_rng(42)
     ks = list(range(1, 16))
@@ -87,10 +89,10 @@ if __name__ == "__main__":
     k_opt = choose_k_by_elbow(ks, inertia)
     elbow_end = time.time()
 
-    # 2) Cluster with optimal k
+    # Cluster with optimal k
     labels, centroids, _ = kmeans(features, k_opt, num_gen=rng)
 
-    # 3) Find the cluster with the highest average sequence length
+    # Find the cluster with the highest average sequence length
     avg_len_by_cluster = []
     for i in range(k_opt):
         cl_idx = (labels == i)
@@ -125,6 +127,7 @@ if __name__ == "__main__":
 
     # Heat map of centroid values (features × clusters)
     # Rows: features (Enzyme, Hydrofob); Cols: cluster IDs
+
     plt.figure(figsize=(1.2*k_opt + 2.5, 3.2))
     mat = centroids.T  # shape (2, k)
     im = plt.imshow(mat, aspect='auto')
