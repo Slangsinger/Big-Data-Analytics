@@ -1,0 +1,14 @@
+provincia: Provincia
+zona: zona
+título: Breve descripción de la oferta.
+PrecioActual: Precio de venta actual.
+PrecioAnterior: Precio de la oferta anterior.
+metros: metros cuadrados.
+habitaciones: número de habitaciones.
+ascensor: si se indica que tenga o no ascensor.
+localización: Interior, exterior,…
+planta: número de planta.
+baños: número de baños.
+tags: etiquetas relevantes dependiendo de lo indicado en la oferta.
+descripción: descripción de la oferta de venta.
+Enlace: enlace a la oferta.
