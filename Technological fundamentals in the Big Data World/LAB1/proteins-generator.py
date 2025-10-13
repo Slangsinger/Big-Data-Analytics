@@ -49,5 +49,3 @@ for i in range (linesno):
          f.write("ABCD")
    f.write(chars)
    f.write("\n")
-
-
