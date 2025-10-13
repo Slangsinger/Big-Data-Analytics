@@ -8,9 +8,29 @@ import multiprocessing as mp
 # ---------- K-means from scratch ----------
 def kmeans(raw_data, k_num, max_iters=300, tol=1e-4, num_gen=None):
     """
-    X: (n, d) data
-    k: clusters
-    returns labels (n,), centroids (k, d), inertia (sum of squared distances)
+    Run K-means algorithm.
+
+    Parameters
+    ----------
+    raw_data : np.ndarray, shape (n, d)
+        Input features (rows are samples, columns are features).
+    k_num : int
+        Number of clusters.
+    max_iters : int
+        Max Lloyd iterations.
+    tol : float
+        Absolute convergence tolerance on centroid shift (Euclidean norm).
+    num_gen : np.random.Generator or None
+        RNG for reproducible initialization and empty-cluster reseeding.
+
+    Returns
+    -------
+    labels : np.ndarray, shape (n,)
+        Cluster assignment for each sample.
+    centroids : np.ndarray, shape (k_num, d)
+        Final centroid locations.
+    inertia : float
+        Within-cluster sum of squares (WSS).
     """
     n, d = raw_data.shape
     if num_gen is None:
@@ -50,6 +70,12 @@ def kmeans(raw_data, k_num, max_iters=300, tol=1e-4, num_gen=None):
 
 # Elbow: choose k by "max distance to the line" heuristic
 def choose_k_by_elbow(k_list, inertia_list):
+    """
+    Select k via the "max distance to line" elbow heuristic.
+
+    Treats the WSS-vs-k curve as a polyline and returns the k whose point
+    is farthest from the line connecting the first and last points.
+    """
     x1, y1 = k_list[0], inertia_list[0]
     x2, y2 = k_list[-1], inertia_list[-1]
 
@@ -69,11 +95,19 @@ def choose_k_by_elbow(k_list, inertia_list):
     return best_k
 
 def elbow_worker(raw_data, k_num, max_iters, tol):
-    # Single run per k (good enough for elbow)
+    """
+    Worker function for one elbow evaluation at a given k.
+
+    """
     _, _, cluster_inertia = kmeans(raw_data, k_num, max_iters=max_iters, tol=tol)
     return k_num, cluster_inertia
 
 def run_parallel_elbow(raw_data, k_list, max_iters=300, tol=1e-4, processes=None):
+    """
+    Compute the elbow curve (WSS vs k) in parallel, each worker is stateless
+
+    """
+
     with mp.get_context("spawn").Pool(processes=processes) as pool:
         results = pool.starmap(
             elbow_worker,
@@ -162,6 +196,7 @@ if __name__ == "__main__":
     print(f"Cluster with highest average sequence length: {best_cluster}")
     print(f"  Avg sequence length: {best_avg_len:.4f} (n={best_count})")
     print(f"Elbow time (MP): {elbow_end - elbow_start:.3f} s")
+    print(f"Serial time (TH): {global_end - global_start-(elbow_end - elbow_start):.3f} s")
     print(f"Total execution time: {global_end - global_start:.3f} s")
 
     # Show all figures at the very end
