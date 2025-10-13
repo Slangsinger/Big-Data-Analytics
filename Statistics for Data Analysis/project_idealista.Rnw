@@ -1,0 +1,275 @@
+\documentclass{article}
+
+% ---- Preamble ----
+\usepackage[utf8]{inputenc}
+\usepackage[english]{babel}
+\usepackage[T1]{fontenc}
+\usepackage{geometry}
+\usepackage{color}
+\usepackage{eurosym}
+\usepackage{graphicx}
+\usepackage{float}
+\usepackage{listings}
+\usepackage{inconsolata}
+\usepackage[sc]{mathpazo}
+\usepackage{amsmath, amssymb}
+\usepackage{url}
+\usepackage[unicode=true, pdfusetitle,
+  bookmarks=true, bookmarksnumbered=true, bookmarksopen=true, 
+  bookmarksopenlevel=2,
+  breaklinks=true, pdfborder={0 0 0}, backref=false, colorlinks=false]{hyperref}
+
+% ---- Title and Author ----
+\title{Unlocking the Housing Puzzle: \\ What Drives Real Estate Prices in Madrid? }
+
+\author{
+  Aleksandr Veretelnik \\
+  Yihang Zhu \\
+  Pablo Cano Turnes \\
+  Miguel Rodríguez Losada
+}
+
+\begin{document}
+
+% ---- KnitR setup ----
+<<setup, include=FALSE, cache=FALSE, warning=FALSE>>=
+library(knitr)
+opts_chunk$set(fig.path='figure/minimal-', fig.align='center', fig.show='hold')
+options(formatR.arrow=TRUE, width=90)
+@
+
+% ---- Title and TOC ----
+
+\pagenumbering{gobble} % Desactiva números de página antes de la introducción
+
+\maketitle
+\newpage
+\tableofcontents
+\newpage
+
+\pagenumbering{arabic} % Activa numeración de nuevo
+\setcounter{page}{1}   % Comienza en la página 1
+
+% ---- Section 1: Introduction ----
+\section{Introduction}
+
+Policymakers as well as members of the general public have long been 
+concerned with the \mbox{housing} market. In recent years, Madrid, the capital city of 
+Spain, has experienced a sharp rise in real estate values, positioning it among 
+the most expensive housing markets in the country. This upward trend has 
+sparked intense debate, not only because of its economic significance, but also 
+because of its social implications, particularly in terms of affordability and 
+accessibility for young people and families.
+
+\vspace{0.15cm}
+
+Identifying the main determinants of housing prices is therefore of great 
+interest. Several attributes are potential candidates: the surface area of the 
+dwelling, the number of rooms, the presence of amenities such as elevators, 
+garages or terraces, and, perhaps most importantly, the location of the 
+property. By studying these characteristics, we aim to assess which factors are 
+most strongly associated with price differences across districts of Madrid.
+
+\vspace{0.15cm}
+
+The primary objective of this project is to provide a descriptive exploration 
+of real estate data collected from the \emph{Idealista} platform. Using this 
+dataset, we will summarize and visualize the main features of the Madrid 
+housing market, and test simple hypotheses regarding the effect of surface 
+area, location, and property characteristics on price. This preliminary work 
+will serve as the foundation for more advanced statistical modelling in later 
+stages of the project.
+
+\vspace{0.15cm}
+
+To be more precise, our main research question is formulated as follows:
+\begin{quote}
+\textit{What are the key determinants of housing prices in Madrid, and how do 
+property characteristics and location explain the variation in price per square 
+meter?}
+\end{quote}
+
+% ---- Section 2: Dataset ----
+\section{Dataset}
+
+The dataset used in this project was obtained from the \emph{Idealista} 
+platform\footnote{\url{https://www.idealista.com}} and contains information on 
+real estate listings in Madrid. It includes several quantitative and 
+categorical variables describing both the price and the main characteristics of 
+the properties. Since the data were originally collected from online listings, 
+a careful curation process was necessary to ensure consistency and to remove 
+invalid entries (e.g., duplicated records, missing or unrealistic values of 
+price or surface).
+
+\vspace{0.1cm}
+
+Below we load the dataset and display the variable structure:
+
+<<>>=
+data <- read.csv("idealista.csv", header=TRUE, sep=",", stringsAsFactors=TRUE)
+
+for (i in seq_along(data)) {
+  var_name <- names(data)[i]
+  var_type <- class(data[[i]])[1]
+  cat(paste0("- ", var_name, ": ", var_type, "\n"))
+}
+@
+
+\textit{Note: Instead of using the \texttt{str()} function, we manually display 
+the names and types of the variables to avoid compilation issues with long R 
+outputs in the \texttt{Sweave} + \texttt{pdflatex} pipeline.}
+
+\vspace{0.1cm}
+
+For the purposes of our analysis, we curated the dataset and focused on the 
+following key variables of interest:
+
+\begin{itemize}
+  \item \textbf{Price}: Advertised price of the dwelling (in euros). Used as a 
+  primary dependent variable.
+  
+  \item \textbf{Surface}: Surface area of the property in square meters. A key 
+  quantitative predictor.
+  
+  \item \textbf{Price per m$^2$}: Derived variable defined as 
+  \(\texttt{Price} / \texttt{Surface}\), used as the main response variable in 
+  subsequent analysis.
+  
+  \item \textbf{District}: Administrative district of Madrid where the 
+  dwelling is located. Categorical variable.
+  
+  \item \textbf{Rooms}: Number of rooms in the dwelling (integer).
+  
+  \item \textbf{Elevator}: Dummy variable (1 if the building has elevator, 0 
+  otherwise).
+  
+  \item \textbf{Garage}: Dummy variable indicating the presence of a garage.
+  
+  \item \textbf{Terrace}: Dummy variable indicating the presence of a terrace.
+\end{itemize}
+
+Additional variables present in the raw dataset (such as textual descriptions 
+or incomplete fields) were excluded during the curation step, as they were not 
+relevant for the scope of this descriptive analysis. To ensure consistency, we 
+restricted our dataset to complete observations of the variables of interest 
+(price, surface, rooms, district, elevator, garage, terrace), and created a 
+derived measure of price per square meter. The final curated dataset is therefore 
+cleaner and well-suited for descriptive and exploratory statistics.
+
+\vspace{0.2cm}
+
+<<curate, echo=TRUE,results='hide'>>=
+# Rename relevant columns to consistent English names
+df <- data.frame(
+  price = data$PrecioActual,
+  surface = data$metros,
+  rooms = data$habitaciones,
+  district = data$zona,
+  elevator = data$ascensor,
+  garage = data$tags,     
+  terrace = data$tags
+)
+
+# Keep only complete rows
+df <- na.omit(df)
+
+# Remove possible zero or negative surfaces
+df <- subset(df, surface > 0)
+
+# Create derived variable
+df$price_m2 <- df$price / df$surface
+
+@
+
+% ---- Section 3: Hypothesis to analyse ----
+\section{Hypothesis to analyse}
+
+Our analysis focuses on identifying the most influential factor behind housing 
+prices in Madrid. In particular, we contrast the role of location (district) 
+with other property characteristics.
+
+\begin{itemize}
+  \item $H_0$: Location is the main determinant of price per square meter in 
+  Madrid, outweighing the effect of other housing features.  
+  \item $H_1$: Other property characteristics (surface, rooms, elevator, garage, 
+  terrace) explain more variation in price per square meter than location.  
+\end{itemize}
+
+% ---- Section 4: Descriptive Statistics ----
+\section{Descriptive Statistics}
+
+We provide below a basic statistical summary of the curated dataset, focusing 
+on the main quantitative variables: \texttt{price}, \texttt{surface}, 
+\texttt{rooms}, and the derived \texttt{price\_m2}. These statistics allow us 
+to gain a first impression of the central tendencies and dispersion of housing 
+values across Madrid.
+
+<<summary, echo=TRUE>>=
+summary(df[, c("price", "surface", "rooms", "price_m2")])
+@
+
+\vspace{0.2cm}
+
+To complement the numerical summaries, we also explore the distribution of 
+listings across districts and visualize some key relationships between 
+variables.
+
+<<graphics, echo=FALSE>>=
+# Multi-panel layout
+par(mfrow = c(2, 2))  # 2 rows, 2 columns
+
+# Histogram of price per m²
+par(mar=c(5, 5, 4, 2))
+hist(df$price_m2, breaks=50, col="lightgreen",
+     main="Distribution of Price per m²", 
+     xlab="Price per m² (euros)", 
+     ylab="Number of Properties")
+
+# Scatterplot price vs surface
+par(mar=c(5, 5, 4, 2))
+plot(df$surface, df$price, pch=19, col=rgb(0,0,1,0.3),
+     main="Relation between Surface and Price", 
+     xlab="Surface Area (m²)", 
+     ylab="Total Price (euros)",
+     xlim=c(0,3100))
+
+# --- Fix district labels ---
+df$district <- as.character(df$district)
+df$district <- gsub("barrio-de-salamanca", "Salamanca", df$district)
+df$district <- gsub("villa-de-vallecas", "Vallecas", df$district)
+df$district <- gsub("ciudad-lineal", "Ciudad Lineal", df$district)
+df$district <- gsub("san-blas", "San Blas", df$district)
+df$district <- gsub("arganzuela", "Arganzuela", df$district)
+df$district <- gsub("usera", "Usera", df$district)
+df$district <- gsub("moratalaz", "Moratalaz", df$district)
+df$district <- gsub("vicalvaro", "Vicálvaro", df$district)
+df$district <- gsub("carabanchel", "Carabanchel", df$district)
+df$district <- gsub("tetuan", "Tetuán", df$district)
+df$district <- gsub("hortaleza", "Hortaleza", df$district)
+df$district <- gsub("moncloa", "Moncloa", df$district)
+df$district <- gsub("chamberi", "Chamberí", df$district)
+df$district <- gsub("centro", "Centro", df$district)
+df$district <- gsub("retiro", "Retiro", df$district)
+df$district <- gsub("latina", "Latina", df$district)
+df$district <- gsub("fuencarral", "Fuencarral", df$district)
+df$district <- gsub("puente-de-vallecas", "Pte. de Vallecas", df$district)
+
+
+# Barplot average price per m² by district
+par(mar=c(8, 5, 4, 2))
+barplot(sort(tapply(df$price_m2, df$district, mean, na.rm=TRUE), decreasing=TRUE),
+        col="salmon", las=2,
+        main="Average Price (euros) per m² by District")
+
+# Barplot number of listings by district
+par(mar=c(8, 5, 4, 2))
+barplot(table(df$district), las=2, col="lightblue",
+        main="Number of Listings per District")
+
+# Reset to default
+par(mfrow = c(1, 1), mar=c(5, 4, 4, 2) + 0.1)
+@
+
+\end{document}
+
+  
