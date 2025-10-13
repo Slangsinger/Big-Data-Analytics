@@ -27,6 +27,11 @@ if __name__ == "__main__":
         res_df = df.loc[has, ["protid", "hydrofob"]].copy()
         res_df["occurrences"] = counts[has]
 
+        # --- Find protein with max occurrences (break ties with hydrofob) ---
+        max_occ = res_df["occurrences"].max()
+        candidates = res_df[res_df["occurrences"] == max_occ]
+        best_protein = candidates.loc[candidates["hydrofob"].idxmax()]
+        
         # --- Plot top 10 proteins by occurrences ---
         top10 = res_df.nlargest(10, "occurrences")
         colors = ["red" if pid == best_protein["protid"] else "blue" for pid in top10["protid"]]
@@ -36,11 +41,6 @@ if __name__ == "__main__":
         plt.ylabel("Occurrences")
         plt.title("Top 10 Proteins with Most Pattern Matches")
         plt.show()
-
-        # --- Find protein with max occurrences (break ties with hydrofob) ---
-        max_occ = res_df["occurrences"].max()
-        candidates = res_df[res_df["occurrences"] == max_occ]
-        best_protein = candidates.loc[candidates["hydrofob"].idxmax()]
 
         print(f"Protein with max occurrences: ID={best_protein['protid']}, "
               f"Occurrences={best_protein['occurrences']}, "
