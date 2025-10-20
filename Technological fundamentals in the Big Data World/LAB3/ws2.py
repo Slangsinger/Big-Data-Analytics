@@ -33,13 +33,13 @@ df = pd.DataFrame(records)
 df_last5 = df[df['year'] >= df['year'].max() - 4]
 
 # Compute averages
-avg_rank_total = df_last5['rank_total'].mean()
+total_marias = df_last5['count'].sum()
 avg_rank_female = df_last5['rank_female'].mean()
 avg_per_thousand_total = df_last5['per_thousand_total'].mean()
 avg_per_thousand_female = df_last5['per_thousand_female'].mean()
 
 # Print results
-print("Average overall rank (last 5 years):", round(avg_rank_total, 1))
+print("Total number of Marias born (last 5 years):", total_marias)
 print("Average female rank (last 5 years):", round(avg_rank_female, 1))
 print("\nFrequency of the name 'Maria' per year:")
 print(df_last5[['year', 'count']])
